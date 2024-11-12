@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
+import React, { useState, useEffect } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 function Map() {
@@ -67,6 +67,7 @@ function Map() {
     function CreationMenu() {
         const [type, setType] = useState('');
         const [severity, setSeverity] = useState(1);
+        const [commentar, setCommentar] = useState('')
 
         useEffect(() => {
             if (showForm) {
@@ -83,6 +84,7 @@ function Map() {
             e.preventDefault();
             console.log('Type:', type);
             console.log('Severity:', severity);
+            console.log('Commentar:', commentar)
             setShowForm(false);
             setShowUserMarker(false);
         };
@@ -122,6 +124,16 @@ function Map() {
                                 max="5"
                                 value={severity}
                                 onChange={(e) => setSeverity(Number(e.target.value))}
+                                className="w-full p-2 border rounded"
+                            />
+                        </div>
+
+                        <div>
+                            <label className="block text-gray-700">Короткий коментар:</label>
+                            <input
+                                type="text"
+                                value={commentar}
+                                onChange={(e) => setCommentar(e.target.value)}
                                 className="w-full p-2 border rounded"
                             />
                         </div>
