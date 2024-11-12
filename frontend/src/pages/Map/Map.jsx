@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
+import React, { useState, useEffect, useRef } from 'react';
+import { MapContainer, TileLayer, Marker, Popup, useMapEvents, useMap } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 
 function Map() {
@@ -9,6 +9,15 @@ function Map() {
     const [userPosition, setUserPosition] = useState(null);
     const [userHasLocation, setUserHasLocation] = useState(false)
     const [showUserMarker, setShowUserMarker] = useState(false)
+    const [map, setMap] = useState(null)
+
+    const handleCenterMap = () => {
+        if (userPosition && map) {
+            map.setView(userPosition, 16, { animate: true });
+        } else {
+            alert("User location not available");
+        }
+    };
 
     // Determine day or night mode
     useEffect(() => {
@@ -136,15 +145,30 @@ function Map() {
                 </div>
             </div>
         ) : null;
-    }    
+    }  
+    
+    function ShowUserLocationButton() {
+        return <div className="fixed bottom-7 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto">
+                    <button
+                        className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 shadow-md"
+                        onClick={handleCenterMap}
+                    >
+                        Моя локація
+                    </button>
+                </div>
+    }
 
     return (
         <div className="relative" style={{ height: "100vh", width: "100%" }}>
             <CreationMenu />
+            <ShowUserLocationButton />
             <MapContainer
                 center={userHasLocation ? userPosition : [48.46432837962857, 35.04685470263019]}
                 zoom={userHasLocation ? 16 : 12}
+                minZoom={9}
+                maxZoon={16}
                 style={{ height: "100%", width: "100%", zIndex: 0 }}
+                ref={setMap}
             >
                 {isDayTime ? (
                     <TileLayer
