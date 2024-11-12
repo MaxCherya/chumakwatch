@@ -7,9 +7,17 @@ function Map() {
     const [showForm, setShowForm] = useState(false);
     const [isDayTime, setIsDayTime] = useState(true);
     const [userPosition, setUserPosition] = useState(null);
-    const [userHasLocation, setUserHasLocation] = useState(false)
-    const [showUserMarker, setShowUserMarker] = useState(false)
-    const [map, setMap] = useState(null)
+    const [userHasLocation, setUserHasLocation] = useState(false);
+    const [showUserMarker, setShowUserMarker] = useState(false);
+    const [map, setMap] = useState(null);
+    const [markers, setMarkers] = useState([]);
+
+    useEffect(() => {
+        fetch('http://127.0.0.1:8000/api/all_markers/')
+            .then((response) => response.json())
+            .then((data) => setMarkers(data))
+            .catch((error) => console.error("Error fetching markers:", error));
+    }, []);    
 
     const handleCenterMap = () => {
         if (userPosition && map) {
@@ -80,11 +88,33 @@ function Map() {
             };
         }, [showForm]);
     
-        const handleSubmit = (e) => {
+        const handleSubmit = async (e) => {
             e.preventDefault();
-            console.log('Type:', type);
-            console.log('Severity:', severity);
-            console.log('Commentar:', commentar)
+            const data = {
+                marker_type: type,
+                severity: severity,
+                commentar: commentar,
+                latitude: parseFloat(position.lat.toFixed(6)),
+                longitude: parseFloat(position.lng.toFixed(6)),
+            };
+        
+            try {
+                const response = await fetch('http://127.0.0.1:8000/api/add_marker/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data),
+                });
+                if (response.ok) {
+                    console.log('Marker added successfully');
+                } else {
+                    console.error('Error adding marker');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+            }
+        
             setShowForm(false);
             setShowUserMarker(false);
         };
@@ -198,6 +228,16 @@ function Map() {
                         <Popup>Ви зараз тут!</Popup>
                     </Marker>
                 )}
+                {/* Render each marker */}
+                {markers.length > 0 ? markers.map((marker) => (
+                    <Marker position={[marker.latitude, marker.longitude]}>
+                        <Popup>
+                            <strong>Type:</strong> {marker.marker_type} <br />
+                            <strong>Severity:</strong> {marker.severity} <br />
+                            <strong>Comment:</strong> {marker.commentar}
+                        </Popup>
+                    </Marker>
+                )) : null}
                 <LocationMarker />
             </MapContainer>
         </div>
