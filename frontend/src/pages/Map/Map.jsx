@@ -4,13 +4,29 @@ import 'leaflet/dist/leaflet.css';
 
 function Map() {
     const [position, setPosition] = useState(null);
-    const [showForm, setShowForm] = useState(false);
     const [isDayTime, setIsDayTime] = useState(true);
     const [userPosition, setUserPosition] = useState(null);
     const [userHasLocation, setUserHasLocation] = useState(false);
-    const [showUserMarker, setShowUserMarker] = useState(false);
     const [map, setMap] = useState(null);
     const [markers, setMarkers] = useState([]);
+    const [streetName, setStreetName] = useState('');
+
+    const getStreetName = async (lat, lng) => {
+        const language = 'ua';
+        const url = `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&accept-language=${language}`;
+
+        try {
+            const response = await fetch(url);
+            const data = await response.json();
+            if (data.address) {
+                setStreetName(data.address.road || 'Невідома вулиця');
+            } else {
+                console.error('Geocoding API error:', data);
+            }
+        } catch (error) {
+            console.error('Error fetching address:', error);
+        }
+    };
 
     useEffect(() => {
         fetch('http://127.0.0.1:8000/api/all_markers/')
@@ -54,140 +70,39 @@ function Map() {
         }
     }, []);
 
-    // Clickable marker to display form
+    // Clickable marker
     function LocationMarker() {
         useMapEvents({
             click(e) {
-                setShowUserMarker(true);
-                setPosition(e.latlng);
-                setShowForm(true);
+                const { lat, lng } = e.latlng;
+                setPosition({ lat, lng });
+                getStreetName(lat, lng);
             },
         });
 
-        return position && showUserMarker ? (
+        return position ? (
             <Marker position={position}>
-                <Popup>Ваша мітка.</Popup>
-            </Marker>
-        ) : null;
-    }
-
-    // Modal form for adding markers
-    function CreationMenu() {
-        const [type, setType] = useState('');
-        const [severity, setSeverity] = useState(1);
-        const [commentar, setCommentar] = useState('')
-
-        useEffect(() => {
-            if (showForm) {
-                document.body.style.overflow = 'hidden';
-            } else {
-                document.body.style.overflow = 'auto';
-            }
-            return () => {
-                document.body.style.overflow = 'auto';
-            };
-        }, [showForm]);
-    
-        const handleSubmit = async (e) => {
-            e.preventDefault();
-            const data = {
-                marker_type: type,
-                severity: severity,
-                commentar: commentar,
-                latitude: parseFloat(position.lat.toFixed(6)),
-                longitude: parseFloat(position.lng.toFixed(6)),
-            };
+                <Popup>
+                    <div className="space-y-3 p-4 bg-white rounded-lg shadow-none w-64">
+                        {/* Street Name or Loading Text */}
+                        <div className="text-md font-medium text-gray-700">
+                            {streetName ? streetName : 'Loading street name...'}
+                        </div>
         
-            try {
-                const response = await fetch('http://127.0.0.1:8000/api/add_marker/', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify(data),
-                });
-                if (response.ok) {
-                    console.log('Marker added successfully');
-                } else {
-                    console.error('Error adding marker');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-            }
-        
-            setShowForm(false);
-            setShowUserMarker(false);
-        };
-
-        const handleCancel = (e) => {
-            e.preventDefault();
-            setShowForm(false);
-            setShowUserMarker(false);
-        }
-    
-        return showForm ? (
-            <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center w-screen h-screen">
-                <div className="bg-white rounded-lg shadow-lg p-6 w-80 lg:w-1/2">
-                    <h2 className="text-xl font-bold mb-4">Додавання маркеру</h2>
-                    <p className="text-sm mb-4">Побачили проблему у дорозі? Повідом іншим чумакам!</p>
-                    
-                    <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-gray-700">Тип:</label>
-                            <select
-                                className="w-full p-2 border rounded"
-                                value={type}
-                                onChange={(e) => setType(e.target.value)}
-                            >
-                                <option value="" disabled>Оберіть</option>
-                                <option value="Accident">Аварія</option>
-                                <option value="Road Condition">Погана дорога</option>
-                                <option value="Traffic Jam">Затор</option>
-                            </select>
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700">Складність (1-5):</label>
-                            <input
-                                type="number"
-                                min="1"
-                                max="5"
-                                value={severity}
-                                onChange={(e) => setSeverity(Number(e.target.value))}
-                                className="w-full p-2 border rounded"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-gray-700">Короткий коментар:</label>
-                            <input
-                                type="text"
-                                value={commentar}
-                                onChange={(e) => setCommentar(e.target.value)}
-                                className="w-full p-2 border rounded"
-                            />
-                        </div>
-
-                        <div className="flex justify-end space-x-4">
-                            <button 
-                                type="button"
-                                className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
-                                onClick={handleCancel}
-                            >
-                                Відмінити
-                            </button>
-                            <button 
-                                type="submit"
-                                className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-                            >
+                        {/* Action Buttons */}
+                        <div className="flex justify-between space-x-2">
+                            <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
                                 Додати
                             </button>
+                            <button className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
+                                Відміна
+                            </button>
                         </div>
-                    </form>
-                </div>
-            </div>
-        ) : null;
-    }  
+                    </div>
+                </Popup>
+            </Marker>
+        ) : null;             
+    }
     
     function ShowUserLocationButton() {
         return <div className="fixed bottom-7 left-1/2 transform -translate-x-1/2 z-[1000] pointer-events-auto">
@@ -202,7 +117,6 @@ function Map() {
 
     return (
         <div className="relative" style={{ height: "100vh", width: "100%" }}>
-            <CreationMenu />
             <ShowUserLocationButton />
             <MapContainer
                 center={userHasLocation ? userPosition : [48.46432837962857, 35.04685470263019]}
@@ -225,7 +139,7 @@ function Map() {
                 )}
                 {userPosition && (
                     <Marker position={userPosition}>
-                        <Popup>Ви зараз тут!</Popup>
+                        <Popup>Ви зараз знаходитесь тут</Popup>
                     </Marker>
                 )}
                 {/* Render each marker */}
