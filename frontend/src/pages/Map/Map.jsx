@@ -7,6 +7,8 @@ function Map() {
     const [showForm, setShowForm] = useState(false);
     const [isDayTime, setIsDayTime] = useState(true);
     const [userPosition, setUserPosition] = useState(null);
+    const [userHasLocation, setUserHasLocation] = useState(false)
+    const [showUserMarker, setShowUserMarker] = useState(false)
 
     // Determine day or night mode
     useEffect(() => {
@@ -23,6 +25,7 @@ function Map() {
                         lat: position.coords.latitude,
                         lng: position.coords.longitude,
                     });
+                    setUserHasLocation(true)
                 },
                 (error) => console.error("Error getting location: ", error),
                 { enableHighAccuracy: true }
@@ -38,14 +41,15 @@ function Map() {
     function LocationMarker() {
         useMapEvents({
             click(e) {
+                setShowUserMarker(true);
                 setPosition(e.latlng);
                 setShowForm(true);
             },
         });
 
-        return position ? (
+        return position && showUserMarker ? (
             <Marker position={position}>
-                <Popup>You clicked here!</Popup>
+                <Popup>Ваша мітка.</Popup>
             </Marker>
         ) : null;
     }
@@ -71,7 +75,14 @@ function Map() {
             console.log('Type:', type);
             console.log('Severity:', severity);
             setShowForm(false);
+            setShowUserMarker(false);
         };
+
+        const handleCancel = (e) => {
+            e.preventDefault();
+            setShowForm(false);
+            setShowUserMarker(false);
+        }
     
         return showForm ? (
             <div className="fixed inset-0 bg-gray-900 bg-opacity-50 z-50 flex items-center justify-center w-screen h-screen">
@@ -110,7 +121,7 @@ function Map() {
                             <button 
                                 type="button"
                                 className="bg-gray-300 text-gray-700 px-4 py-2 rounded hover:bg-gray-400"
-                                onClick={() => setShowForm(false)}
+                                onClick={handleCancel}
                             >
                                 Відмінити
                             </button>
@@ -118,7 +129,7 @@ function Map() {
                                 type="submit"
                                 className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
                             >
-                                Submit
+                                Додати
                             </button>
                         </div>
                     </form>
@@ -131,8 +142,8 @@ function Map() {
         <div className="relative" style={{ height: "100vh", width: "100%" }}>
             <CreationMenu />
             <MapContainer
-                center={userPosition || [48.46432837962857, 35.04685470263019]}
-                zoom={12}
+                center={userHasLocation ? userPosition : [48.46432837962857, 35.04685470263019]}
+                zoom={userHasLocation ? 16 : 12}
                 style={{ height: "100%", width: "100%", zIndex: 0 }}
             >
                 {isDayTime ? (
@@ -148,7 +159,7 @@ function Map() {
                 )}
                 {userPosition && (
                     <Marker position={userPosition}>
-                        <Popup>You are here!</Popup>
+                        <Popup>Ви зараз тут!</Popup>
                     </Marker>
                 )}
                 <LocationMarker />
