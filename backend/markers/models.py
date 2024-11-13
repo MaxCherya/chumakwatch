@@ -1,6 +1,7 @@
 from django.db import models
 
 class Marker(models.Model):
+    id = models.AutoField(primary_key=True)
     marker_type = models.CharField(max_length=50)
     severity = models.IntegerField()
     commentar = models.TextField(blank=True, null=True)

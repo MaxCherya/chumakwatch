@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMapEvents } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
+import { useNavigate } from 'react-router-dom';
 
 function Map() {
     const [position, setPosition] = useState(null);
@@ -10,6 +11,7 @@ function Map() {
     const [map, setMap] = useState(null);
     const [markers, setMarkers] = useState([]);
     const [streetName, setStreetName] = useState('');
+    const navigate = useNavigate();
 
     const getStreetName = async (lat, lng) => {
         const language = 'ua';
@@ -27,6 +29,14 @@ function Map() {
             console.error('Error fetching address:', error);
         }
     };
+    
+    const handleAdd = () => {
+        if (position) {
+          navigate('/adding-marker', {
+            state: { position },
+          });
+        }
+      };
 
     useEffect(() => {
         fetch('http://127.0.0.1:8000/api/all_markers/')
@@ -91,10 +101,12 @@ function Map() {
         
                         {/* Action Buttons */}
                         <div className="flex justify-between space-x-2">
-                            <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50">
+                            <button className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-opacity-50"
+                            onClick={handleAdd}>
                                 Додати
                             </button>
-                            <button className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50">
+                            <button className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-opacity-50"
+                            onClick={() => {map.closePopup()}}>
                                 Відміна
                             </button>
                         </div>
@@ -144,7 +156,7 @@ function Map() {
                 )}
                 {/* Render each marker */}
                 {markers.length > 0 ? markers.map((marker) => (
-                    <Marker position={[marker.latitude, marker.longitude]}>
+                    <Marker key={marker.id} position={[marker.latitude, marker.longitude]}>
                         <Popup>
                             <strong>Type:</strong> {marker.marker_type} <br />
                             <strong>Severity:</strong> {marker.severity} <br />

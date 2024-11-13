@@ -4,4 +4,4 @@ from .models import Marker
 class MarkerSerializer(serializers.ModelSerializer):
     class Meta:
         model = Marker
-        fields = ['marker_type', 'severity', 'commentar', 'latitude', 'longitude']
+        fields = ['id', 'marker_type', 'severity', 'commentar', 'latitude', 'longitude']

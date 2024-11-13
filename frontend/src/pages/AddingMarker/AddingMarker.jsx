@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import ReCAPTCHA from "react-google-recaptcha";
+import { useLocation, useNavigate } from 'react-router-dom';
 
 function AddingMarker() {
 
@@ -7,21 +8,24 @@ function AddingMarker() {
     const [severity, setSeverity] = useState(1);
     const [commentar, setCommentar] = useState('')
     const [captcha, setCaptcha] = useState(null)
+    const location = useLocation();
+    const { position } = location.state || {};
+    const navigate = useNavigate();
+
 
     const handleCaptchaChange = (value) => {
-        console.log("Captcha completed, token:", value);
-        setCaptchaToken(value);
+        setCaptcha(value);
       };
 
     const handleCancel = (e) => {
         e.preventDefault();
-        console.log("Cancelled")
+        navigate('/');
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        if (!captchaToken) {
+        if (!captcha) {
             alert("Please complete the CAPTCHA");
             return;
         }
@@ -32,7 +36,7 @@ function AddingMarker() {
             commentar: commentar,
             latitude: parseFloat(position.lat.toFixed(6)),
             longitude: parseFloat(position.lng.toFixed(6)),
-            captcha: captchaToken,
+            captcha: captcha,
         };
 
         try {
@@ -52,8 +56,8 @@ function AddingMarker() {
             console.error('Error:', error);
         }
 
-        setShowForm(false);
-        setShowUserMarker(false);
+        navigate('/');
+
     };
 
     return (
